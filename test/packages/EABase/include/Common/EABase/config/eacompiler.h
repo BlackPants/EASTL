@@ -272,7 +272,7 @@
 	#if !defined(EA_COMPILER_CPP14_ENABLED) && defined(__cplusplus)
 		#if (__cplusplus >= 201402L) 								// Clang and GCC defines this like so in C++14 mode.
 			#define EA_COMPILER_CPP14_ENABLED 1
-		#elif defined(_MSC_VER) && (EA_COMPILER_VERSION >= 1900)  	// VS2015+ 
+		#elif defined(_MSC_VER) && (_MSC_VER >= 1900)  	// VS2015+ 
 			#define EA_COMPILER_CPP14_ENABLED 1
 		#endif
 	#endif
