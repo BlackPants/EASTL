@@ -10,6 +10,10 @@
 #ifndef EASTL_RANDOM_H
 #define EASTL_RANDOM_H
 
+#ifdef __GNUC__
+	#pragma GCC system_header
+#endif
+
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once
 #endif

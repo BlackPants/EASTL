@@ -50,6 +50,10 @@
 //   cast truncates constant value / expression is always false
 EA_DISABLE_VC_WARNING(4310 4296)
 
+#ifdef __GNUC__
+	#pragma GCC system_header
+#endif
+
 // EASTL_CUSTOM_FLOAT_CONSTANTS_REQUIRED
 //
 // Defined as 0 or 1.

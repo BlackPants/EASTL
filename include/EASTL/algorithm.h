@@ -255,6 +255,10 @@
 	#pragma warning(pop)
 #endif
 
+#ifdef __GNUC__
+	#pragma GCC system_header
+#endif
+
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif

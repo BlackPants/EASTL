@@ -16,6 +16,10 @@
 
 EA_ONCE()
 
+#ifdef __GNUC__
+	#pragma GCC system_header
+#endif
+
 #include <EASTL/internal/config.h>
 
 namespace eastl

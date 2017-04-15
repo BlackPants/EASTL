@@ -15,6 +15,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifdef __GNUC__
+	#pragma GCC system_header
+#endif
+
 #include <EABase/eabase.h>
 #include <EASTL/internal/config.h>
 

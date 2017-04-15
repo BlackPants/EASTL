@@ -8,6 +8,11 @@
 
 
 #include <EABase/eabase.h>
+
+#if defined(__GNUC__)
+	#pragma GCC system_header
+#endif
+
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once
 #endif

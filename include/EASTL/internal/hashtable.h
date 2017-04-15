@@ -59,6 +59,10 @@
 	#pragma warning(disable: 4571)  // catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
 #endif
 
+#ifdef __GNUC__
+	#pragma GCC system_header
+#endif
+
 
 namespace eastl
 {

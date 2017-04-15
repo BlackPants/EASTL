@@ -88,6 +88,10 @@
 #ifndef INCLUDED_eacompilertraits_H
 #define INCLUDED_eacompilertraits_H
 
+	#ifdef __GNUC__
+		#pragma GCC system_header
+	#endif
+
 	#include <EABase/config/eaplatform.h>
 	#include <EABase/config/eacompiler.h>
 
