@@ -111,7 +111,9 @@
 	// format macros if __STDC_FORMAT_MACROS is defined before #including
 	// inttypes.h. For consistency, we do that here.
 	#ifndef __STDC_FORMAT_MACROS
-	   #define __STDC_FORMAT_MACROS
+		EA_DISABLE_CLANG_WARNING(-Wreserved-id-macro)
+		#define __STDC_FORMAT_MACROS
+		EA_RESTORE_CLANG_WARNING()
 	#endif
 	// The GCC PSP compiler defines standard int types (e.g. uint32_t) but not PRId8, etc.
 	// MSVC added support for inttypes.h header in VS2013.
