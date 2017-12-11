@@ -145,8 +145,8 @@ namespace eastl
 				kMaxSize = (size_type)-2
 			};
 		#else
-			static const size_type npos     = (size_type)-1;      /// 'npos' means non-valid position or simply non-position.
-			static const size_type kMaxSize = (size_type)-2;      /// -1 is reserved for 'npos'. It also happens to be slightly beneficial that kMaxSize is a value less than -1, as it helps us deal with potential integer wraparound issues.
+			static const size_type npos     = static_cast<size_type>(-1);      /// 'npos' means non-valid position or simply non-position.
+			static const size_type kMaxSize = static_cast<size_type>(-2);      /// -1 is reserved for 'npos'. It also happens to be slightly beneficial that kMaxSize is a value less than -1, as it helps us deal with potential integer wraparound issues.
 		#endif
 
 	protected:
@@ -503,7 +503,7 @@ namespace eastl
 		// This is fine, as our default ctor initializes with NULL pointers. 
 		if(EASTL_LIKELY(n))
 		{
-			auto* p = (T*)allocate_memory(mAllocator, n * sizeof(T), EASTL_ALIGN_OF(T), 0);
+			auto* p = static_cast<T*>(allocate_memory(mAllocator, n * sizeof(T), EASTL_ALIGN_OF(T), 0));
 			EASTL_ASSERT_MSG(p != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
 			return p;
 		}
@@ -830,7 +830,7 @@ namespace eastl
 	inline typename vector<T, Allocator>::size_type
 	vector<T, Allocator>::size() const EA_NOEXCEPT
 	{
-		return (size_type)(mpEnd - mpBegin);
+		return static_cast<size_type>(mpEnd - mpBegin);
 	}
 
 
@@ -838,15 +838,15 @@ namespace eastl
 	inline typename vector<T, Allocator>::size_type
 	vector<T, Allocator>::capacity() const EA_NOEXCEPT
 	{
-		return (size_type)(mpCapacity - mpBegin);
+		return static_cast<size_type>(mpCapacity - mpBegin);
 	}
 
 
 	template <typename T, typename Allocator>
 	inline void vector<T, Allocator>::resize(size_type n, const value_type& value)
 	{
-		if(n > (size_type)(mpEnd - mpBegin))  // We expect that more often than not, resizes will be upsizes.
-			DoInsertValuesEnd(n - ((size_type)(mpEnd - mpBegin)), value);
+		if(n > static_cast<size_type>(mpEnd - mpBegin))  // We expect that more often than not, resizes will be upsizes.
+			DoInsertValuesEnd(n - (static_cast<size_type>(mpEnd - mpBegin)), value);
 		else
 		{
 			eastl::destruct(mpBegin + n, mpEnd);
@@ -861,8 +861,8 @@ namespace eastl
 		// Alternative implementation:
 		// resize(n, value_type());
 
-		if(n > (size_type)(mpEnd - mpBegin))  // We expect that more often than not, resizes will be upsizes.
-			DoInsertValuesEnd(n - ((size_type)(mpEnd - mpBegin)));
+		if(n > static_cast<size_type>(mpEnd - mpBegin))  // We expect that more often than not, resizes will be upsizes.
+			DoInsertValuesEnd(n - (static_cast<size_type>(mpEnd - mpBegin)));
 		else
 		{
 			eastl::destruct(mpBegin + n, mpEnd);
@@ -883,7 +883,7 @@ namespace eastl
 	template <typename T, typename Allocator>
 	void vector<T, Allocator>::set_capacity(size_type n)
 	{
-		if((n == npos) || (n <= (size_type)(mpEnd - mpBegin))) // If new capacity <= size...
+		if((n == npos) || (n <= static_cast<size_type>(mpEnd - mpBegin))) // If new capacity <= size...
 		{
 			if(n == 0)  // Very often n will be 0, and clear will be faster than resize and use less stack space.
 				clear();
