@@ -15,18 +15,14 @@
 
 #include "ConceptImpls.h"
 
-#ifdef _MSC_VER
-#pragma warning(push, 0)
-#endif
 
+EA_DISABLE_ALL_VC_WARNINGS()
 #ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
-#include <vector>
-#include <string>
+	#include <vector>
+	#include <string>
 #endif
+EA_RESTORE_ALL_VC_WARNINGS()
 
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
 // Template instantations.
 // These tell the compiler to compile all the functions for the given class.
@@ -34,6 +30,33 @@ template class eastl::vector<bool>;
 template class eastl::vector<int>;
 template class eastl::vector<Align64>;
 template class eastl::vector<TestObject>;
+
+// TODO(rparolin): Fix compiler errors and enable this 
+// template class eastl::vector<eastl::unique_ptr<int>>;
+
+
+// This tests "uninitialized_fill" usage in vector when T has a user provided
+// address-of operator overload.  In these situations, EASTL containers must use
+// the standard utility "eastl::addressof(T)" which is designed to by-pass user
+// provided address-of operator overloads.
+// 
+// Previously written as: 
+// 	for(; first != last; ++first, ++currentDest)
+// 		::new((void*)&*currentDest) value_type(*first); // & not guaranteed to be a pointer
+//
+// Bypasses user 'addressof' operators:
+// 	for(; n > 0; --n, ++currentDest)
+// 		::new(eastl::addressof(*currentDest)) value_type(value);  // guaranteed to be a pointer
+//
+struct AddressOfOperatorResult {};
+struct HasAddressOfOperator 
+{
+	// problematic 'addressof' operator that doesn't return a pointer type
+    AddressOfOperatorResult operator&() const { return {}; }
+};
+template class eastl::vector<HasAddressOfOperator>;  // force compile all functions of vector
+
+
 
 // Test compiler issue that appeared in VS2012 relating to kAlignment
 struct StructWithContainerOfStructs
@@ -121,6 +144,17 @@ public:
 	testmovable& operator=(testmovable&&) EA_NOEXCEPT { return *this; }
 };
 
+#if EASTL_MOVE_SEMANTICS_ENABLED
+	struct TestMoveAssignToSelf
+	{
+		TestMoveAssignToSelf() : mMovedToSelf(false) {}
+		TestMoveAssignToSelf(const TestMoveAssignToSelf& other)       { mMovedToSelf = other.mMovedToSelf; }
+		TestMoveAssignToSelf& operator=(TestMoveAssignToSelf&& other) { mMovedToSelf = true; return *this; }
+		TestMoveAssignToSelf& operator=(const TestMoveAssignToSelf&) = delete;
+
+		bool mMovedToSelf;
+	};
+#endif
 
 #if EASTL_VARIABLE_TEMPLATES_ENABLED
 	/// custom type-trait which checks if a type is comparable via the <operator.
@@ -136,8 +170,6 @@ public:
 
 int TestVector()
 {
-	EASTLTest_Printf("TestVector\n");
-
 	int nErrorCount = 0;
 	eastl_size_t i;
 
@@ -769,6 +801,39 @@ int TestVector()
 	TestObject::Reset();
 
 	{
+		const int valueToRemove = 44;
+		int testValues[] = {42, 43, 44, 45, 46, 47};
+
+		eastl::vector<eastl::unique_ptr<int>> v; 
+		
+		for(auto& te : testValues)
+			v.push_back(eastl::make_unique<int>(te));
+
+		// remove 'valueToRemove' from the container
+		auto iterToRemove = eastl::find_if(v.begin(), v.end(), [&](eastl::unique_ptr<int>& e)
+		                                   { return *e == valueToRemove; });
+		v.erase_unsorted(iterToRemove); 
+		EATEST_VERIFY(v.size() == 5);
+
+		// verify 'valueToRemove' is no longer in the container
+		EATEST_VERIFY(eastl::find_if(v.begin(), v.end(), [&](eastl::unique_ptr<int>& e)
+		                             { return *e == valueToRemove; }) == v.end());
+
+		// verify all other expected values are in the container
+		for (auto& te : testValues)
+		{
+			if (te == valueToRemove)
+				continue;
+
+			EATEST_VERIFY(eastl::find_if(v.begin(), v.end(), [&](eastl::unique_ptr<int>& e)
+			                             { return *e == te; }) != v.end());
+		}
+	}
+
+	EATEST_VERIFY(TestObject::IsClear());
+	TestObject::Reset();
+
+	{
 		using namespace eastl;
 
 		// iterator insert(iterator position, const value_type& value);
@@ -1374,6 +1439,15 @@ int TestVector()
 		testmovable moveable;
 		moveablevec.insert(moveablevec.end(), eastl::move(moveable));
 	}
+
+	{
+		// Calling erase of empty range should not call a move assignment to self
+		eastl::vector<TestMoveAssignToSelf> v1;
+		v1.push_back(TestMoveAssignToSelf());
+		EATEST_VERIFY(!v1[0].mMovedToSelf);
+		v1.erase(v1.begin(), v1.begin());
+		EATEST_VERIFY(!v1[0].mMovedToSelf);
+	}
 #endif
 
 #if defined(EASTL_TEST_CONCEPT_IMPLS)
@@ -1443,20 +1517,14 @@ int TestVector()
 	{
 		// vector::swap() should only require Destructible. We also test with DefaultConstructible as it gives us a
 		// testable result.
-		// Doesn't currently work for EASTL since it handles the case where allocators do not compare equal at runtime
-		// by copying elements so elements are required to be copy constructible
-		// FAILS!
-		/*
+
 		eastl::vector<Destructible> v4, v5;
 		eastl::swap(v4, v5);
 		EATEST_VERIFY(v4.empty() && v5.empty());
-		*/
-		// FAILS!
-		/*
+
 		eastl::vector<DefaultConstructible> v6(1), v7(2);
 		eastl::swap(v6, v7);
 		EATEST_VERIFY(v6.size() == 2 && v7.size() == 1);
-		*/
 	}
 
 #if EASTL_MOVE_SEMANTICS_ENABLED
@@ -1558,6 +1626,12 @@ int TestVector()
 			}
 		}
 	#endif
+
+	{
+		// CustomAllocator has no data members which reduces the size of an eastl::vector via the empty base class optimization.
+		typedef eastl::vector<int, CustomAllocator> EboVector;
+		static_assert(sizeof(EboVector) == 3 * sizeof(void*), "");
+	}
 
 	return nErrorCount;
 }

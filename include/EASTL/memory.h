@@ -428,7 +428,7 @@ namespace eastl
 					try
 					{
 						for(; first != last; ++first, ++dest)
-							::new((void*)&*dest) value_type(*first);
+							::new((void*)eastl::addressof(*dest)) value_type(*first);
 					}
 					catch(...)
 					{
@@ -438,7 +438,7 @@ namespace eastl
 					}
 				#else
 					for(; first != last; ++first, ++dest)
-						::new((void*)&*dest) value_type(*first);
+						::new((void*)eastl::addressof(*dest)) value_type(*first);
 				#endif
 
 				return dest;
@@ -596,7 +596,7 @@ namespace eastl
 				try
 				{
 					for(; first != last; ++first, ++currentDest)
-						::new((void*)&*currentDest) value_type(*first);
+						::new((void*)eastl::addressof(*currentDest)) value_type(*first);
 				}
 				catch(...)
 				{
@@ -606,7 +606,7 @@ namespace eastl
 				}
 			#else
 				for(; first != last; ++first, ++currentDest)
-					::new((void*)&*currentDest) value_type(*first);
+					::new((void*)eastl::addressof(*currentDest)) value_type(*first);
 			#endif
 
 			return currentDest;
@@ -661,7 +661,7 @@ namespace eastl
 					try
 					{
 						for(; n > 0; --n, ++first, ++currentDest)
-							::new((void*)&*currentDest) value_type(*first);
+							::new((void*)(eastl::addressof(*currentDest))) value_type(*first);
 					}
 					catch(...)
 					{
@@ -671,7 +671,7 @@ namespace eastl
 					}
 				#else
 					for(; n > 0; --n, ++first, ++currentDest)
-						::new((void*)&*currentDest) value_type(*first);
+						::new((void*)eastl::addressof(*currentDest)) value_type(*first);
 				#endif
 
 				return currentDest;
@@ -740,7 +740,7 @@ namespace eastl
 					try
 					{
 						for(; first != last; ++first, ++currentDest)
-							::new((void*)&*currentDest) value_type(eastl::move(*first)); // If value_type has a move constructor then it will be used here.
+							::new((void*)eastl::addressof(*currentDest)) value_type(eastl::move(*first)); // If value_type has a move constructor then it will be used here.
 					}
 					catch(...)
 					{
@@ -757,7 +757,7 @@ namespace eastl
 					}
 				#else
 					for(; first != last; ++first, ++currentDest)
-						::new((void*)&*currentDest) value_type(eastl::move(*first)); // If value_type has a move constructor then it will be used here.
+						::new((void*)eastl::addressof(*currentDest)) value_type(eastl::move(*first)); // If value_type has a move constructor then it will be used here.
 				#endif
 
 				return currentDest;
@@ -929,7 +929,7 @@ namespace eastl
 		}
 #else
 		for (; n > 0; --n, ++currentDest)
-			::new (static_cast<void*>(&*currentDest)) value_type();
+			::new (eastl::addressof(*currentDest)) value_type();
 #endif
 	}
 	EA_RESTORE_VC_WARNING()
@@ -962,7 +962,7 @@ namespace eastl
 				try
 				{
 					for(; currentDest != last; ++currentDest)
-						::new((void*)&*currentDest) value_type(value);
+						::new((void*)eastl::addressof(*currentDest)) value_type(value);
 				}
 				catch(...)
 				{
@@ -972,7 +972,7 @@ namespace eastl
 				}
 			#else
 				for(; currentDest != last; ++currentDest)
-					::new((void*)&*currentDest) value_type(value);
+					::new((void*)eastl::addressof(*currentDest)) value_type(value);
 			#endif
 		}
 	}
@@ -1029,7 +1029,7 @@ namespace eastl
 				try
 				{
 					for(; n > 0; --n, ++currentDest)
-						::new((void*)&*currentDest) value_type(value);
+						::new((void*)eastl::addressof(*currentDest)) value_type(value);
 				}
 				catch(...)
 				{
@@ -1039,7 +1039,7 @@ namespace eastl
 				}
 			#else
 				for(; n > 0; --n, ++currentDest)
-					::new((void*)&*currentDest) value_type(value);
+					::new((void*)eastl::addressof(*currentDest)) value_type(value);
 			#endif
 		}
 	}
