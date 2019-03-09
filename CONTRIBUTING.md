@@ -14,7 +14,7 @@ Your pull request should:
 	* tests should be minimal and stable
 	* fail before your fix is applied
 * pass the test suite
-* code formatting is encoded in clang format 
+* code formatting is encoded in clang format
 	* limit using clang format on new code
 	* do not deviate from style already established in the files
 
@@ -28,7 +28,7 @@ EASTL uses CMake as its build system.
 * Generate build scripts:
 	* cmake eastl_source_folder -DEASTL_BUILD_TESTS:BOOL=ON
 * Build unit tests for "your_config":
-	* cmake --build . --config your_config 
+	* cmake --build . --config your_config
 * Run the unit tests for "your_config" from the test folder:
 	* cd test && ctest -C your_config
 
@@ -37,7 +37,7 @@ Here is an example batch file.
 set build_folder=out
 mkdir %build_folder%
 pushd %build_folder%
-call cmake .. -DEASTL_BUILD_TESTS:BOOL=ON
+call cmake .. -DEASTL_BUILD_TESTS:BOOL=ON -DEASTL_BUILD_BENCHMARK:BOOL=OFF
 call cmake --build . --config Release
 call cmake --build . --config Debug
 call cmake --build . --config RelWithDebInfo
@@ -56,7 +56,7 @@ Here is an example bash file
 build_folder=out
 mkdir $build_folder
 pushd $build_folder
-cmake .. -DEASTL_BUILD_TESTS:BOOL=ON
+cmake .. -DEASTL_BUILD_TESTS:BOOL=ON -DEASTL_BUILD_BENCHMARK:BOOL=OFF
 cmake --build . --config Release
 cmake --build . --config Debug
 cmake --build . --config RelWithDebInfo
@@ -69,3 +69,5 @@ ctest -C MinSizeRel
 popd
 popd
 ```
+
+The value of EASTL_BUILD_BENCHMARK can be toggled to `ON` in order to build projects that include the benchmark program.
