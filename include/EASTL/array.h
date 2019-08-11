@@ -23,13 +23,9 @@
 #include <stddef.h>
 
 #if EASTL_EXCEPTIONS_ENABLED
-	#ifdef _MSC_VER
-		#pragma warning(push, 0)
-	#endif
+	EA_DISABLE_ALL_VC_WARNINGS()
 	#include <stdexcept> // std::out_of_range, std::length_error.
-	#ifdef _MSC_VER
-		#pragma warning(pop)
-	#endif
+	EA_RESTORE_ALL_VC_WARNINGS()
 #endif
 
 #ifdef __GNUC__
@@ -74,7 +70,7 @@ namespace eastl
 		typedef const value_type*                             const_iterator;
 		typedef eastl::reverse_iterator<iterator>             reverse_iterator;
 		typedef eastl::reverse_iterator<const_iterator>       const_reverse_iterator;
-		typedef eastl_size_t                                  size_type;        // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+		typedef eastl_size_t                                  size_type;        // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef ptrdiff_t                                     difference_type;
 
 	public:
@@ -97,39 +93,39 @@ namespace eastl
 		// may exit via an exception, and does not cause iterators to become associated with the other container.
 		void swap(this_type& x) EA_NOEXCEPT_IF(eastl::is_nothrow_swappable<value_type>::value); 
 
-		iterator       begin() EA_NOEXCEPT;
-		const_iterator begin() const EA_NOEXCEPT;
-		const_iterator cbegin() const EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR iterator       begin() EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR const_iterator begin() const EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR const_iterator cbegin() const EA_NOEXCEPT;
 
-		iterator       end() EA_NOEXCEPT;
-		const_iterator end() const EA_NOEXCEPT;
-		const_iterator cend() const EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR iterator       end() EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR const_iterator end() const EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR const_iterator cend() const EA_NOEXCEPT;
 
-		reverse_iterator       rbegin() EA_NOEXCEPT;
-		const_reverse_iterator rbegin() const EA_NOEXCEPT;
-		const_reverse_iterator crbegin() const EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR reverse_iterator       rbegin() EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR const_reverse_iterator rbegin() const EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR const_reverse_iterator crbegin() const EA_NOEXCEPT;
 
-		reverse_iterator       rend() EA_NOEXCEPT;
-		const_reverse_iterator rend() const EA_NOEXCEPT;
-		const_reverse_iterator crend() const EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR reverse_iterator       rend() EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR const_reverse_iterator rend() const EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR const_reverse_iterator crend() const EA_NOEXCEPT;
 
-		bool      empty() const EA_NOEXCEPT;
-		size_type size() const EA_NOEXCEPT;
-		size_type max_size() const EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR bool empty() const EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR size_type size() const EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR size_type max_size() const EA_NOEXCEPT;
 
-		T*       data() EA_NOEXCEPT;
-		const T* data() const EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR T*       data() EA_NOEXCEPT;
+		EA_CPP14_CONSTEXPR const T* data() const EA_NOEXCEPT;
 
-		reference       operator[](size_type i);
-		const_reference operator[](size_type i) const;
-		const_reference at(size_type i) const;
-		reference       at(size_type i);
+		EA_CPP14_CONSTEXPR reference       operator[](size_type i);
+		EA_CPP14_CONSTEXPR const_reference operator[](size_type i) const;
+		EA_CPP14_CONSTEXPR const_reference at(size_type i) const;
+		EA_CPP14_CONSTEXPR reference       at(size_type i);
 
-		reference       front();
-		const_reference front() const;
+		EA_CPP14_CONSTEXPR reference       front();
+		EA_CPP14_CONSTEXPR const_reference front() const;
 
-		reference       back();
-		const_reference back() const;
+		EA_CPP14_CONSTEXPR reference       back();
+		EA_CPP14_CONSTEXPR const_reference back() const;
 
 		bool validate() const;
 		int  validate_iterator(const_iterator i) const;
@@ -159,7 +155,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::iterator
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::iterator
 	array<T, N>::begin() EA_NOEXCEPT
 	{
 		return &mValue[0];
@@ -167,7 +163,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::const_iterator
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_iterator
 	array<T, N>::begin() const EA_NOEXCEPT
 	{
 		return &mValue[0];
@@ -175,7 +171,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::const_iterator
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_iterator
 	array<T, N>::cbegin() const EA_NOEXCEPT
 	{
 		return &mValue[0];
@@ -183,7 +179,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::iterator
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::iterator
 	array<T, N>::end() EA_NOEXCEPT
 	{
 		return &mValue[N];
@@ -191,7 +187,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::const_iterator
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_iterator
 	array<T, N>::end() const EA_NOEXCEPT
 	{
 		return &mValue[N];
@@ -199,7 +195,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::const_iterator
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_iterator
 	array<T, N>::cend() const EA_NOEXCEPT
 	{
 		return &mValue[N];
@@ -207,7 +203,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::reverse_iterator
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::reverse_iterator
 	array<T, N>::rbegin() EA_NOEXCEPT
 	{
 		return reverse_iterator(&mValue[N]);
@@ -215,7 +211,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::const_reverse_iterator
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_reverse_iterator
 	array<T, N>::rbegin() const EA_NOEXCEPT
 	{
 		return const_reverse_iterator(&mValue[N]);
@@ -223,7 +219,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::const_reverse_iterator
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_reverse_iterator
 	array<T, N>::crbegin() const EA_NOEXCEPT
 	{
 		return const_reverse_iterator(&mValue[N]);
@@ -231,7 +227,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::reverse_iterator
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::reverse_iterator
 	array<T, N>::rend() EA_NOEXCEPT
 	{
 		return reverse_iterator(&mValue[0]);
@@ -239,23 +235,23 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::const_reverse_iterator
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_reverse_iterator
 	array<T, N>::rend() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(reinterpret_cast<const_iterator>(&mValue[0]));
+		return const_reverse_iterator(static_cast<const_iterator>(&mValue[0]));
 	}
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::const_reverse_iterator
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_reverse_iterator
 	array<T, N>::crend() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(reinterpret_cast<const_iterator>(&mValue[0]));
+		return const_reverse_iterator(static_cast<const_iterator>(&mValue[0]));
 	}
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::size_type
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::size_type
 	array<T, N>::size() const EA_NOEXCEPT
 	{
 		return (size_type)N;
@@ -263,7 +259,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::size_type
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::size_type
 	array<T, N>::max_size() const EA_NOEXCEPT
 	{
 		return (size_type)N;
@@ -271,14 +267,14 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline bool array<T, N>::empty() const EA_NOEXCEPT
+	EA_CPP14_CONSTEXPR inline bool array<T, N>::empty() const EA_NOEXCEPT
 	{
 		return (N == 0);
 	}
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::reference
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::reference
 	array<T, N>::operator[](size_type i)
 	{
 		#if EASTL_ASSERT_ENABLED
@@ -292,7 +288,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::const_reference
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_reference
 	array<T, N>::operator[](size_type i) const
 	{
 		#if EASTL_ASSERT_ENABLED
@@ -307,7 +303,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::reference
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::reference
 	array<T, N>::front()
 	{
 		#if EASTL_ASSERT_ENABLED
@@ -320,7 +316,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::const_reference  
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_reference  
 	array<T, N>::front() const
 	{
 		#if EASTL_ASSERT_ENABLED
@@ -333,7 +329,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::reference
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::reference
 	array<T, N>::back()
 	{
 		#if EASTL_ASSERT_ENABLED
@@ -346,7 +342,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::const_reference
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_reference
 	array<T, N>::back() const
 	{
 		#if EASTL_ASSERT_ENABLED
@@ -359,23 +355,21 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	inline T* array<T, N>::data() EA_NOEXCEPT
+	EA_CPP14_CONSTEXPR inline T* array<T, N>::data() EA_NOEXCEPT
 	{
 		return mValue;
 	}
 
 
 	template <typename T, size_t N>
-	inline const T*
-	array<T, N>::data() const EA_NOEXCEPT
+	EA_CPP14_CONSTEXPR inline const T* array<T, N>::data() const EA_NOEXCEPT
 	{
 		return mValue;
 	}
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::const_reference
-	array<T, N>::at(size_type i) const
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_reference array<T, N>::at(size_type i) const
 	{
 		#if EASTL_EXCEPTIONS_ENABLED
 			if(EASTL_UNLIKELY(i >= N))
@@ -386,13 +380,12 @@ namespace eastl
 		#endif
 
 		EA_ANALYSIS_ASSUME(i < N);
-		return reinterpret_cast<const_reference>(mValue[i]); 
+		return static_cast<const_reference>(mValue[i]); 
 	}
 
 
 	template <typename T, size_t N>
-	inline typename array<T, N>::reference
-	array<T, N>::at(size_type i)
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::reference array<T, N>::at(size_type i)
 	{
 		#if EASTL_EXCEPTIONS_ENABLED
 			if(EASTL_UNLIKELY(i >= N))
@@ -403,7 +396,7 @@ namespace eastl
 		#endif
 
 		EA_ANALYSIS_ASSUME(i < N);
-		return reinterpret_cast<reference>(mValue[i]);
+		return static_cast<reference>(mValue[i]);
 	}
 
 
@@ -436,42 +429,42 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////
 
 	template <typename T, size_t N>
-	inline bool operator==(const array<T, N>& a, const array<T, N>& b)
+	EA_CPP14_CONSTEXPR inline bool operator==(const array<T, N>& a, const array<T, N>& b)
 	{
 		return eastl::equal(&a.mValue[0], &a.mValue[N], &b.mValue[0]);
 	}
 
 
 	template <typename T, size_t N>
-	inline bool operator<(const array<T, N>& a, const array<T, N>& b)
+	EA_CPP14_CONSTEXPR inline bool operator<(const array<T, N>& a, const array<T, N>& b)
 	{
 		return eastl::lexicographical_compare(&a.mValue[0], &a.mValue[N], &b.mValue[0], &b.mValue[N]);
 	}
 
 
 	template <typename T, size_t N>
-	inline bool operator!=(const array<T, N>& a, const array<T, N>& b)
+	EA_CPP14_CONSTEXPR inline bool operator!=(const array<T, N>& a, const array<T, N>& b)
 	{
 		return !eastl::equal(&a.mValue[0], &a.mValue[N], &b.mValue[0]);
 	}
 
 
 	template <typename T, size_t N>
-	inline bool operator>(const array<T, N>& a, const array<T, N>& b)
+	EA_CPP14_CONSTEXPR inline bool operator>(const array<T, N>& a, const array<T, N>& b)
 	{
 		return eastl::lexicographical_compare(&b.mValue[0], &b.mValue[N], &a.mValue[0], &a.mValue[N]);
 	}
 
 
 	template <typename T, size_t N>
-	inline bool operator<=(const array<T, N>& a, const array<T, N>& b)
+	EA_CPP14_CONSTEXPR inline bool operator<=(const array<T, N>& a, const array<T, N>& b)
 	{
 		return !eastl::lexicographical_compare(&b.mValue[0], &b.mValue[N], &a.mValue[0], &a.mValue[N]);
 	}
 
 
 	template <typename T, size_t N>
-	inline bool  operator>=(const array<T, N>& a, const array<T, N>& b)
+	EA_CPP14_CONSTEXPR inline bool operator>=(const array<T, N>& a, const array<T, N>& b)
 	{
 		return !eastl::lexicographical_compare(&a.mValue[0], &a.mValue[N], &b.mValue[0], &b.mValue[N]);
 	}

@@ -1,4 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // Copyright (c) Electronic Arts Inc. All rights reserved.
 /////////////////////////////////////////////////////////////////////////////
 
@@ -171,14 +172,9 @@ namespace eastl
 
 #ifndef EASTL_USER_DEFINED_ALLOCATOR // If the user hasn't declared that he has defined a different allocator implementation elsewhere...
 
-	#ifdef _MSC_VER
-		#pragma warning(push, 0)
-		#pragma warning(disable: 4265 4365 4836 4548)
-		#include <new>
-		#pragma warning(pop)
-	#else
-		#include <new>
-	#endif
+	EA_DISABLE_ALL_VC_WARNINGS()
+	#include <new>
+	EA_RESTORE_ALL_VC_WARNINGS()
 
 	#if !EASTL_DLL // If building a regular library and not building EASTL as a DLL...
 		// It is expected that the application define the following
@@ -380,16 +376,14 @@ namespace eastl
 		{
 			result = EASTLAllocAligned(a, n, alignment, alignmentOffset);
 			// Ensure the result is correctly aligned.  An assertion here may indicate a bug in the allocator.
-			EASTL_ASSERT((reinterpret_cast<size_t>(result)& ~(alignment - 1)) == reinterpret_cast<size_t>(result));
+			auto resultMinusOffset = (char*)result - alignmentOffset;
+			EA_UNUSED(resultMinusOffset);
+			EASTL_ASSERT((reinterpret_cast<size_t>(resultMinusOffset)& ~(alignment - 1)) == reinterpret_cast<size_t>(resultMinusOffset));
 		}
 		return result;
 	}
 
 }
-
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
 
 
 #endif // Header include guard
