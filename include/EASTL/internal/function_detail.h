@@ -34,6 +34,11 @@
 	EA_RESTORE_ALL_VC_WARNINGS()
 #endif
 
+#ifdef _MSC_VER
+	#pragma warning(push)
+	#pragma warning(disable: 4061) // enumerator in switch not explicitly handled
+#endif
+
 namespace eastl
 {
 	#if EASTL_EXCEPTIONS_ENABLED
@@ -580,5 +585,9 @@ namespace eastl
 	} // namespace internal
 
 } // namespace eastl
+
+#ifdef _MSC_VER
+	#pragma warning(pop)
+#endif
 
 #endif // EASTL_FUNCTION_DETAIL_H
