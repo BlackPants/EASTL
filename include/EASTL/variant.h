@@ -57,14 +57,14 @@
 #define EASTL_VARIANT_H
 
 #include <EASTL/internal/config.h>
-#include <EASTL/internal/type_pod.h>
 #include <EASTL/internal/in_place_t.h>
 #include <EASTL/internal/integer_sequence.h>
 #include <EASTL/meta.h>
 #include <EASTL/utility.h>
-#include <EASTL/functional.h> 
+#include <EASTL/functional.h>
 #include <EASTL/initializer_list.h>
 #include <EASTL/tuple.h>
+#include <EASTL/type_traits.h>
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -261,15 +261,18 @@ namespace eastl
 		};
 
 		// handler function
-		using StorageHandlerPtr = void(*)(StorageOp, void*, void*);
+		using storage_handler_ptr = void(*)(StorageOp, void*, void*);
 		using aligned_storage_impl_t = aligned_union_t<16, Types...>;
 
 		aligned_storage_impl_t mBuffer;
-		StorageHandlerPtr mpHandler = nullptr;
+		storage_handler_ptr mpHandler = nullptr;
 
 		template<typename VariantStorageT>
 		inline void DoOp(StorageOp op, VariantStorageT&& other)  // bind to both rvalue and lvalues
 		{
+			if(mpHandler)
+				DoOp(StorageOp::DESTROY);
+
 			if (other.mpHandler)
 				mpHandler = other.mpHandler;
 
@@ -361,7 +364,7 @@ namespace eastl
 
 			new (&mBuffer) RT(eastl::forward<Args>(args)...);
 
-			mpHandler = (StorageHandlerPtr)&DoOpImpl<RT>;
+			mpHandler = (storage_handler_ptr)&DoOpImpl<RT>;
 		}
 
 		template <typename T, typename U, typename... Args>
@@ -376,7 +379,7 @@ namespace eastl
 
 			new (&mBuffer) RT(il, eastl::forward<Args>(args)...);
 
-			mpHandler = (StorageHandlerPtr)&DoOpImpl<RT>;
+			mpHandler = (storage_handler_ptr)&DoOpImpl<RT>;
 		}
 
 		template<typename T>
@@ -712,7 +715,7 @@ namespace eastl
 			static_assert((meta::type_count_v<T_j, Types...> == 1), "function overload is not unique - duplicate types in type list");
 
 			mIndex = static_cast<variant_index_t>(I);
-			mStorage.template set_as<T_j>(eastl::forward<T_j>(t));
+			mStorage.template set_as<T_j>(eastl::forward<T>(t));
 		}
 
 
@@ -857,7 +860,7 @@ namespace eastl
 				mStorage.destroy();
 
 			mIndex = static_cast<variant_index_t>(I);
-			mStorage.template set_as<T_j>(eastl::forward<T_j>(t));
+			mStorage.template set_as<T_j>(eastl::forward<T>(t));
 			return *this;
 		}
 
@@ -1132,31 +1135,44 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////////
 	// 20.7.5, relational operators
 	//
-	template <class... Types, class Predicate>
-	EA_CPP14_CONSTEXPR bool Compare(const variant<Types...>& lhs, const variant<Types...>& rhs, Predicate predicate)
+	namespace internal
 	{
-		return visit(predicate, lhs, rhs);
-	}
 
-	// For variant visitation, we need to have a comparison function for all possible combinations of types,
-	// eg. for variant<int, string>, our comparator needs:
-	//
-	//   bool operator()(int, int);
-	//   bool operator()(int, string);
-	//   bool operator()(string, int);
-	//   bool operator()(string, string);
-	//
-	// Even though we never call the mixed-type versions of these functions when comparing variants, we
-	// need them in order to compile visit(). So this struct forwards the good comparisons to the appropriate
-	// comparison, and asserts that we never call the bad comparisons.
-	template <typename C>
-	struct variant_comparison : public C
-	{
-		template <typename A, typename B>
-		auto operator()(A&& a, B&& b) -> decltype(C::operator()(a, b)) { return C::operator()(a, b); }
+		template <class... Types, class Predicate>
+		EA_CPP14_CONSTEXPR bool Compare(const variant<Types...>& lhs, const variant<Types...>& rhs, Predicate predicate)
+		{
+			return visit(predicate, lhs, rhs);
+		}
 
-		template <typename... Args> bool operator()(Args&&...) { EASTL_ASSERT(false); return false; }
-	};
+		// For variant visitation, we need to have a comparison function for all possible combinations of types,
+		// eg. for variant<int, string>, our comparator needs:
+		//
+		//   bool operator()(int, int);
+		//   bool operator()(int, string);
+		//   bool operator()(string, int);
+		//   bool operator()(string, string);
+		//
+		// Even though we never call the mixed-type versions of these functions when comparing variants, we
+		// need them in order to compile visit(). So this struct forwards the good comparisons to the appropriate
+		// comparison, and asserts that we never call the bad comparisons.
+		template <typename C>
+		struct variant_comparison : public C
+		{
+			template <typename A, typename B, typename = eastl::enable_if_t<eastl::is_same_v<eastl::decay_t<A>, eastl::decay_t<B>>>>
+			auto operator()(const A& a, const B& b)
+			{
+				return C::operator()(a, b);
+			}
+
+			template <typename A, typename B, typename = eastl::enable_if_t<!eastl::is_same_v<eastl::decay_t<A>, eastl::decay_t<B>>>>
+			bool operator()(const A&, const B&)
+			{
+				EASTL_ASSERT_MSG(false, "eastl::variant<> comparison function called on two different types at different indices! This is a library bug! Please file bug report.");
+				return false;
+			}
+		};
+
+	} // namespace internal
 
 	///////////////////////////////////////////////////////////////////////////
 	// 20.7.5, relational operators
@@ -1164,57 +1180,57 @@ namespace eastl
 	template <class... Types>
 	EA_CPP14_CONSTEXPR bool operator==(const variant<Types...>& lhs, const variant<Types...>& rhs)
 	{
-		if(lhs.index() != rhs.index()) return false;
-		if(lhs.valueless_by_exception()) return true;
-		return Compare(lhs, rhs, variant_comparison<equal_to<>>{});
+		if (lhs.index() != rhs.index()) return false;
+		if (lhs.valueless_by_exception()) return true;
+		return internal::Compare(lhs, rhs, internal::variant_comparison<equal_to<>>{});
 	}
 
 	template <class... Types>
 	EA_CPP14_CONSTEXPR bool operator<(const variant<Types...>& lhs, const variant<Types...>& rhs)
 	{
-		if(rhs.valueless_by_exception()) return false;
-		if(lhs.valueless_by_exception()) return true;
-		if(lhs.index() < rhs.index()) return true;
-		if(lhs.index() > rhs.index()) return false;
-		return Compare(lhs, rhs, variant_comparison<less<>>{});
+		if (rhs.valueless_by_exception()) return false;
+		if (lhs.valueless_by_exception()) return true;
+		if (lhs.index() < rhs.index()) return true;
+		if (lhs.index() > rhs.index()) return false;
+		return internal::Compare(lhs, rhs, internal::variant_comparison<less<>>{});
 	}
 
 	template <class... Types>
 	EA_CPP14_CONSTEXPR bool operator!=(const variant<Types...>& lhs, const variant<Types...>& rhs)
 	{
-		if(lhs.index() != rhs.index()) return true;
-		if(lhs.valueless_by_exception()) return false;
-		return !(lhs == rhs);
+		if (lhs.index() != rhs.index()) return true;
+		if (lhs.valueless_by_exception()) return false;
+		return internal::Compare(lhs, rhs, internal::variant_comparison<not_equal_to<>>{});
 	}
 
 	template <class... Types>
 	EA_CPP14_CONSTEXPR bool operator>(const variant<Types...>& lhs, const variant<Types...>& rhs)
 	{
-		if(lhs.valueless_by_exception()) return false;
-		if(rhs.valueless_by_exception()) return true;
-		if(lhs.index() > rhs.index()) return true;
-		if(lhs.index() < rhs.index()) return false;
-		return rhs < lhs;
+		if (lhs.valueless_by_exception()) return false;
+		if (rhs.valueless_by_exception()) return true;
+		if (lhs.index() > rhs.index()) return true;
+		if (lhs.index() < rhs.index()) return false;
+		return internal::Compare(lhs, rhs, internal::variant_comparison<greater<>>{});
 	}
 
 	template <class... Types>
 	EA_CPP14_CONSTEXPR bool operator<=(const variant<Types...>& lhs, const variant<Types...>& rhs)
 	{
-		if(rhs.valueless_by_exception()) return true;
-		if(lhs.valueless_by_exception()) return false;
-		if(lhs.index() < rhs.index()) return true;
-		if(lhs.index() > rhs.index()) return false;
-		return !(rhs < lhs);
+		if (rhs.valueless_by_exception()) return true;
+		if (lhs.valueless_by_exception()) return false;
+		if (lhs.index() < rhs.index()) return true;
+		if (lhs.index() > rhs.index()) return false;
+		return internal::Compare(lhs, rhs, internal::variant_comparison<less_equal<>>{});
 	}
 
 	template <class... Types>
 	EA_CPP14_CONSTEXPR bool operator>=(const variant<Types...>& lhs, const variant<Types...>& rhs)
 	{
-		if(rhs.valueless_by_exception()) return true;
-		if(lhs.valueless_by_exception()) return false;
-		if(lhs.index() > rhs.index()) return true;
-		if(lhs.index() < rhs.index()) return false;
-		return !(lhs < rhs);
+		if (rhs.valueless_by_exception()) return true;
+		if (lhs.valueless_by_exception()) return false;
+		if (lhs.index() > rhs.index()) return true;
+		if (lhs.index() < rhs.index()) return false;
+		return internal::Compare(lhs, rhs, internal::variant_comparison<greater_equal<>>{});
 	}
 } // namespace eastl
 

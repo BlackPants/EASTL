@@ -11,35 +11,26 @@
 #include <EASTL/internal/move_help.h>
 #include <EASTL/initializer_list.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-#endif
+EA_DISABLE_ALL_VC_WARNINGS();
 
 #include <stddef.h>
 
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
+EA_RESTORE_ALL_VC_WARNINGS();
 
 // If the user has specified that we use std iterator
 // categories instead of EASTL iterator categories,
 // then #include <iterator>.
 #if EASTL_STD_ITERATOR_CATEGORY_ENABLED
-	#ifdef _MSC_VER
-		#pragma warning(push, 0)
-	#endif
-	#include <iterator>                 
-	#ifdef _MSC_VER
-		#pragma warning(pop)
-	#endif
-#endif                                  
+	EA_DISABLE_ALL_VC_WARNINGS();
 
+	#include <iterator>
 
-#ifdef _MSC_VER
-	#pragma warning(push)           // VC++ generates a bogus warning that you cannot code away.
-	#pragma warning(disable: 4619)  // There is no warning number 'number'.
-	#pragma warning(disable: 4217)  // Member template functions cannot be used for copy-assignment or copy-construction.
+	EA_RESTORE_ALL_VC_WARNINGS();
 #endif
+
+
+EA_DISABLE_VC_WARNING(4619); // There is no warning number 'number'.
+EA_DISABLE_VC_WARNING(4217); // Member template functions cannot be used for copy-assignment or copy-construction.
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -311,11 +302,8 @@ namespace eastl
 		// random_access_iterator operator[] is merely required to return something convertible to reference. 
 		// reverse_iterator operator[] can't necessarily know what to return as the underlying iterator 
 		// operator[] may return something other than reference.
-		// reference operator[](difference_type n) const
-		//     { return mIterator[-n - 1]; }
-
 		EA_CPP14_CONSTEXPR reference operator[](difference_type n) const
-			{ return *(*this + n); }
+			{ return mIterator[-n - 1]; }
 	};
 
 
@@ -638,6 +626,9 @@ namespace eastl
 
 		back_insert_iterator& operator=(const_reference value)
 			{ container.push_back(value); return *this; }
+
+		back_insert_iterator& operator=(typename Container::value_type&& value)
+			{ container.push_back(eastl::move(value)); return *this; }
 
 		back_insert_iterator& operator*()
 			{ return *this; }
@@ -1192,14 +1183,7 @@ namespace eastl
 
 
 
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
-
+EA_RESTORE_VC_WARNING();
+EA_RESTORE_VC_WARNING();
 
 #endif // Header include guard
-
-
-
-
-

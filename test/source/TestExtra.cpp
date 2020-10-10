@@ -14,6 +14,8 @@ namespace eastl
 	template <typename T, typename Allocator> class basic_string;
 	typedef basic_string<char, allocator> local_string8;  // collides with eastl::string8 in bulkbuilds
 
+	template <typename T> struct local_less {};
+
 	static void UseForwardDeclaredString(local_string8*)
 	{
 	}
@@ -28,7 +30,7 @@ namespace eastl
 
 
 	template <typename Value, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode> class hash_set;
-	typedef hash_set<char, char, char, allocator, false> hash_set8;
+	typedef hash_set<char, char, local_less<char>, allocator, false> hash_set8;
 
 	static void UseForwardDeclaredHashSet(hash_set8*)
 	{
@@ -36,7 +38,7 @@ namespace eastl
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator> class map;
-	typedef map<char, char, char, allocator> map8;
+	typedef map<char, char, local_less<char>, allocator> map8;
 
 	static void UseForwardDeclaredMap(map8*)
 	{
@@ -869,12 +871,40 @@ static int TestAdaptors()
 {
 	int nErrorCount = 0;
 
+	// reverse lvalue container
 	{
 		int int_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 		eastl::vector<int> original(begin(int_data), end(int_data));
 
 		eastl::vector<int> reversed;
 		for(auto& e : eastl::reverse(original))
+			reversed.push_back(e);
+
+		eastl::reverse(begin(original), end(original));
+		EATEST_VERIFY(reversed == original);
+	}
+
+	// reverse const lvalue container
+	{
+		int int_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+		const eastl::vector<int> original(begin(int_data), end(int_data));
+
+		eastl::vector<int> reversed;
+		for(auto& e : eastl::reverse(original))
+			reversed.push_back(e);
+
+		eastl::vector<int> reversed_original(original);
+		eastl::reverse(begin(reversed_original), end(reversed_original));
+		EATEST_VERIFY(reversed == reversed_original);
+	}
+
+	// reverse rvalue container
+	{
+		int int_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+		eastl::vector<int> original(begin(int_data), end(int_data));
+
+		eastl::vector<int> reversed;
+		for (auto& e : eastl::reverse(eastl::vector<int>(original)))
 			reversed.push_back(e);
 
 		eastl::reverse(begin(original), end(original));

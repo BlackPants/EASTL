@@ -90,24 +90,25 @@ EA_RESTORE_ALL_VC_WARNINGS()
 	EA_RESTORE_ALL_VC_WARNINGS()
 #endif
 
-#ifdef _MSC_VER
-	#pragma warning(push)
-	#pragma warning(disable: 4267)  // 'argument' : conversion from 'size_t' to 'const uint32_t', possible loss of data. This is a bogus warning resulting from a bug in VC++.
-	#pragma warning(disable: 4345)  // Behavior change: an object of POD type constructed with an initializer of the form () will be default-initialized
-	#pragma warning(disable: 4480)  // nonstandard extension used: specifying underlying type for enum
-	#pragma warning(disable: 4530)  // C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
-	#pragma warning(disable: 4571)  // catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
-	#if EASTL_EXCEPTIONS_ENABLED
-	#pragma warning(disable: 4703)  // potentially uninitialized local pointer variable used.   VC++ is mistakenly analyzing the possibility of uninitialized variables, though it's not easy for it to do so.
-	#pragma warning(disable: 4701)  // potentially uninitialized local variable used.
-	#endif
+
+// 4267 - 'argument' : conversion from 'size_t' to 'const uint32_t', possible loss of data. This is a bogus warning resulting from a bug in VC++.
+// 4345 - Behavior change: an object of POD type constructed with an initializer of the form () will be default-initialized
+// 4480 - nonstandard extension used: specifying underlying type for enum
+// 4530 - C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+// 4571 - catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
+EA_DISABLE_VC_WARNING(4267 4345 4480 4530 4571);
+
+#if EASTL_EXCEPTIONS_ENABLED
+	// 4703 - potentially uninitialized local pointer variable used. VC++ is mistakenly analyzing the possibility of uninitialized variables, though it's not easy for it to do so.
+	// 4701 - potentially uninitialized local variable used.
+	EA_DISABLE_VC_WARNING(4703 4701)
 #endif
 
 #ifdef __GNUC__
 	#pragma GCC system_header
 #endif
 
-		
+
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
@@ -568,6 +569,7 @@ namespace eastl
 		{
 			DoFreeSubarrays(mItBegin.mpCurrentArrayPtr, mItEnd.mpCurrentArrayPtr + 1);
 			DoFreePtrArray(mpPtrArray, mnPtrArraySize);
+			mpPtrArray = nullptr;
 		}
 	}
 
@@ -1518,11 +1520,12 @@ namespace eastl
 	typename deque<T, Allocator, kDequeSubarraySize>::reference
 	deque<T, Allocator, kDequeSubarraySize>::operator[](size_type n)
 	{
-		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED    // We allow the user to use a reference to v[0] of an empty container.
-			if(EASTL_UNLIKELY((n != 0) && n >= (size_type)(mItEnd - mItBegin)))
+		#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+			if (EASTL_UNLIKELY(n >= (size_type)(mItEnd - mItBegin)))
 				EASTL_FAIL_MSG("deque::operator[] -- out of range");
 		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(n >= (size_type)(mItEnd - mItBegin)))
+			// We allow taking a reference to deque[0]
+			if (EASTL_UNLIKELY((n != 0) && n >= (size_type)(mItEnd - mItBegin)))
 				EASTL_FAIL_MSG("deque::operator[] -- out of range");
 		#endif
 
@@ -1540,11 +1543,12 @@ namespace eastl
 	typename deque<T, Allocator, kDequeSubarraySize>::const_reference
 	deque<T, Allocator, kDequeSubarraySize>::operator[](size_type n) const
 	{
-		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED    // We allow the user to use a reference to v[0] of an empty container.
-			if(EASTL_UNLIKELY((n != 0) && n >= (size_type)(mItEnd - mItBegin)))
+		#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+			if (EASTL_UNLIKELY(n >= (size_type)(mItEnd - mItBegin)))
 				EASTL_FAIL_MSG("deque::operator[] -- out of range");
 		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(n >= (size_type)(mItEnd - mItBegin)))
+			// We allow the user to use a reference to deque[0] of an empty container.
+			if (EASTL_UNLIKELY((n != 0) && n >= (size_type)(mItEnd - mItBegin)))
 				EASTL_FAIL_MSG("deque::operator[] -- out of range");
 		#endif
 
@@ -1592,11 +1596,11 @@ namespace eastl
 	typename deque<T, Allocator, kDequeSubarraySize>::reference
 	deque<T, Allocator, kDequeSubarraySize>::front()
 	{
-		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
-			// We allow the user to reference an empty container.
-		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY((size_type)(mItEnd == mItBegin)))
+		#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+			if (EASTL_UNLIKELY((size_type)(mItEnd == mItBegin)))
 				EASTL_FAIL_MSG("deque::front -- empty deque");
+		#else
+			// We allow the user to reference an empty container.
 		#endif
 
 		return *mItBegin;
@@ -1607,11 +1611,11 @@ namespace eastl
 	typename deque<T, Allocator, kDequeSubarraySize>::const_reference
 	deque<T, Allocator, kDequeSubarraySize>::front() const
 	{
-		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
-			// We allow the user to reference an empty container.
-		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY((size_type)(mItEnd == mItBegin)))
+		#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+			if (EASTL_UNLIKELY((size_type)(mItEnd == mItBegin)))
 				EASTL_FAIL_MSG("deque::front -- empty deque");
+		#else
+			// We allow the user to reference an empty container.
 		#endif
 
 		return *mItBegin;
@@ -1622,11 +1626,11 @@ namespace eastl
 	typename deque<T, Allocator, kDequeSubarraySize>::reference
 	deque<T, Allocator, kDequeSubarraySize>::back()
 	{
-		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
-			// We allow the user to reference an empty container.
-		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY((size_type)(mItEnd == mItBegin)))
+		#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+			if (EASTL_UNLIKELY((size_type)(mItEnd == mItBegin)))
 				EASTL_FAIL_MSG("deque::back -- empty deque");
+		#else
+			// We allow the user to reference an empty container.
 		#endif
 
 		return *iterator(mItEnd, typename iterator::Decrement());
@@ -1637,11 +1641,11 @@ namespace eastl
 	typename deque<T, Allocator, kDequeSubarraySize>::const_reference
 	deque<T, Allocator, kDequeSubarraySize>::back() const
 	{
-		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
-			// We allow the user to reference an empty container.
-		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY((size_type)(mItEnd == mItBegin)))
+		#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+			if (EASTL_UNLIKELY((size_type)(mItEnd == mItBegin)))
 				EASTL_FAIL_MSG("deque::back -- empty deque");
+		#else
+			// We allow the user to reference an empty container.
 		#endif
 
 		return *iterator(mItEnd, typename iterator::Decrement());
@@ -2616,19 +2620,19 @@ namespace eastl
 	template <typename T, typename Allocator, unsigned kDequeSubarraySize>
 	inline bool operator==(const deque<T, Allocator, kDequeSubarraySize>& a, const deque<T, Allocator, kDequeSubarraySize>& b)
 	{
-		return ((a.size() == b.size()) && equal(a.begin(), a.end(), b.begin()));
+		return ((a.size() == b.size()) && eastl::equal(a.begin(), a.end(), b.begin()));
 	}
 
 	template <typename T, typename Allocator, unsigned kDequeSubarraySize>
 	inline bool operator!=(const deque<T, Allocator, kDequeSubarraySize>& a, const deque<T, Allocator, kDequeSubarraySize>& b)
 	{
-		return ((a.size() != b.size()) || !equal(a.begin(), a.end(), b.begin()));
+		return ((a.size() != b.size()) || !eastl::equal(a.begin(), a.end(), b.begin()));
 	}
 
 	template <typename T, typename Allocator, unsigned kDequeSubarraySize>
 	inline bool operator<(const deque<T, Allocator, kDequeSubarraySize>& a, const deque<T, Allocator, kDequeSubarraySize>& b)
 	{
-		return lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
+		return eastl::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
 	}
 
 	template <typename T, typename Allocator, unsigned kDequeSubarraySize>
@@ -2655,20 +2659,33 @@ namespace eastl
 		a.swap(b);
 	}
 
+	///////////////////////////////////////////////////////////////////////
+	// erase / erase_if
+	//
+	// https://en.cppreference.com/w/cpp/container/deque/erase2
+	///////////////////////////////////////////////////////////////////////
+	template <class T, class Allocator, class U>
+	void erase(deque<T, Allocator>& c, const U& value)
+	{
+		// Erases all elements that compare equal to value from the container.
+		c.erase(eastl::remove(c.begin(), c.end(), value), c.end());
+	}
+
+	template <class T, class Allocator, class Predicate>
+	void erase_if(deque<T, Allocator>& c, Predicate predicate)
+	{
+		// Erases all elements that satisfy the predicate pred from the container.
+		c.erase(eastl::remove_if(c.begin(), c.end(), predicate), c.end());
+	}
+
 
 } // namespace eastl
 
 
-#ifdef _MSC_VER
-	#pragma warning(pop)
+EA_RESTORE_VC_WARNING();
+#if EASTL_EXCEPTIONS_ENABLED
+	EA_RESTORE_VC_WARNING();
 #endif
 
 
 #endif // Header include guard
-
-
-
-
-
-
-
